@@ -1,0 +1,15 @@
+CREATE INDEX idx_series_name ON series(name);
+CREATE INDEX idx_series_publisher_id ON series(publisher_id);
+CREATE INDEX idx_issues_series_id ON issues(series_id);
+CREATE INDEX idx_issues_number ON issues(number);
+CREATE INDEX idx_issues_cv_id ON issues(cv_id);
+CREATE INDEX idx_issues_gcd_id ON issues(gcd_id);
+CREATE INDEX idx_editions_user_id ON editions(user_id);
+CREATE INDEX idx_editions_title ON editions(title);
+CREATE INDEX idx_editions_isbn ON editions(isbn);
+CREATE INDEX idx_edition_issues_edition_id ON edition_issues(edition_id);
+CREATE INDEX idx_edition_issues_issue_id ON edition_issues(issue_id);
+CREATE INDEX idx_saga_issues_saga_id ON saga_issues(saga_id);
+CREATE INDEX idx_saga_issues_issue_id ON saga_issues(issue_id);
+CREATE INDEX idx_external_sources_entity ON external_sources(entity_type, entity_id);
+CREATE INDEX idx_external_sources_source ON external_sources(source_name, source_id);
