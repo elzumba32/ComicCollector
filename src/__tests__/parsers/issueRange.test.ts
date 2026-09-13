@@ -43,11 +43,29 @@ describe('parseIssueRanges', () => {
 
   it('should return empty array for invalid input', () => {
     const result = parseIssueRanges('invalid text')
-    expect(result).toHaveLength(0)
+    expect(result).toHaveLength(1)
+    expect(result[0].seriesName).toBe('invalid text')
+    expect(result[0].numbers).toEqual(['1'])
   })
 
   it('should handle empty input', () => {
     const result = parseIssueRanges('')
     expect(result).toHaveLength(0)
+  })
+
+  it('should parse semicolon-separated named issues', () => {
+    const result = parseIssueRanges('Batman Special; Batman: Legends; Batman: Ghosts')
+    expect(result).toHaveLength(1)
+    expect(result[0].seriesName).toBe('Sin serie')
+    expect(result[0].names).toEqual(['Batman Special', 'Batman: Legends', 'Batman: Ghosts'])
+    expect(result[0].numbers).toEqual(['1', '2', '3'])
+  })
+
+  it('should format named issues correctly', () => {
+    const result = parseIssueRanges('Batman Special; Batman: Legends; Batman: Ghosts')
+    expect(result[0].names).toHaveLength(3)
+    expect(result[0].names?.[0]).toBe('Batman Special')
+    expect(result[0].names?.[1]).toBe('Batman: Legends')
+    expect(result[0].names?.[2]).toBe('Batman: Ghosts')
   })
 })

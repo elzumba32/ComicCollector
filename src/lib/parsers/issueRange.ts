@@ -1,6 +1,7 @@
 interface ParsedRange {
   seriesName: string
   numbers: string[]
+  names?: string[]
 }
 
 export function parseIssueRanges(text: string): ParsedRange[] {
@@ -9,17 +10,27 @@ export function parseIssueRanges(text: string): ParsedRange[] {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
   
   for (const line of lines) {
-    // Find where numbers start (first digit or #digit)
-    const numbersStart = line.search(/#?\d/)
+    const semicolonParts = line.split(';').map(p => p.trim()).filter(Boolean)
     
-    if (numbersStart > 0) {
-      const seriesName = line.substring(0, numbersStart).replace(/#+$/, '').trim()
-      const numbersPart = line.substring(numbersStart).replace(/^#/, '')
+    if (semicolonParts.length > 1) {
+      const names = semicolonParts
+      const numbers = names.map((_, i) => (i + 1).toString())
       
-      const numbers = parseNumbers(numbersPart)
+      results.push({ seriesName: 'Sin serie', numbers, names })
+    } else {
+      const numbersStart = line.search(/#?\d/)
       
-      if (numbers.length > 0 && seriesName.length > 0) {
-        results.push({ seriesName, numbers })
+      if (numbersStart > 0) {
+        const seriesName = line.substring(0, numbersStart).replace(/#+$/, '').trim()
+        const numbersPart = line.substring(numbersStart).replace(/^#/, '')
+        
+        const numbers = parseNumbers(numbersPart)
+        
+        if (numbers.length > 0 && seriesName.length > 0) {
+          results.push({ seriesName, numbers })
+        }
+      } else if (line.length > 0) {
+        results.push({ seriesName: line, numbers: ['1'] })
       }
     }
   }
@@ -30,7 +41,6 @@ export function parseIssueRanges(text: string): ParsedRange[] {
 function parseNumbers(text: string): string[] {
   const numbers: string[] = []
   
-  // Split by commas, semicolons, or spaces followed by #
   const parts = text.split(/[,;]+|(?:\s*#\s*)/).map(p => p.trim()).filter(Boolean)
   
   for (const part of parts) {
@@ -56,6 +66,14 @@ function parseNumbers(text: string): string[] {
 
 export function formatParsedRanges(ranges: ParsedRange[]): string {
   return ranges
-    .map(r => `${r.seriesName}: #${r.numbers[0]}${r.numbers.length > 1 ? `-#${r.numbers[r.numbers.length - 1]}` : ''} (${r.numbers.length} números)`)
+    .map(r => {
+      if (r.names && r.names.length > 0) {
+        return r.names.join(', ')
+      }
+      if (r.numbers.length === 1 && r.numbers[0] === '1') {
+        return r.seriesName
+      }
+      return `${r.seriesName}: #${r.numbers[0]}${r.numbers.length > 1 ? `-#${r.numbers[r.numbers.length - 1]}` : ''} (${r.numbers.length} números)`
+    })
     .join('\n')
 }

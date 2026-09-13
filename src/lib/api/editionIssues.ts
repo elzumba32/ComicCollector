@@ -76,11 +76,14 @@ export async function checkIssueInEdition(editionId: string, issueId: string): P
   return !!data
 }
 
-export async function findOrCreateIssues(seriesId: string, numbers: string[]) {
+export async function findOrCreateIssues(seriesId: string, numbers: string[], names?: string[]) {
   const supabase = createClient()
   const issueIds: string[] = []
 
-  for (const number of numbers) {
+  for (let i = 0; i < numbers.length; i++) {
+    const number = numbers[i]
+    const name = names?.[i]
+    
     // Try to find existing issue
     const { data: existing } = await supabase
       .from('issues')
@@ -95,7 +98,7 @@ export async function findOrCreateIssues(seriesId: string, numbers: string[]) {
       // Create new issue
       const { data: newIssue, error } = await supabase
         .from('issues')
-        .insert({ series_id: seriesId, number })
+        .insert({ series_id: seriesId, number, title: name || null })
         .select('id')
         .single()
 

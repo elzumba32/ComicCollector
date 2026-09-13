@@ -9,6 +9,7 @@ import { Search, Plus, X } from 'lucide-react'
 interface ParsedRange {
   seriesName: string
   numbers: string[]
+  names?: string[]
 }
 
 interface RangeParserProps {
@@ -29,7 +30,7 @@ export function RangeParser({ onParsed }: RangeParserProps) {
     const ranges = parseIssueRanges(text)
     
     if (ranges.length === 0) {
-      setError('No se detectaron rangos válidos. Formato: "Batman #488-496"')
+      setError('No se detectaron rangos válidos. Formato: "Batman #488-496" o "Batman Special; Batman: Legends"')
       return
     }
 
@@ -54,7 +55,7 @@ export function RangeParser({ onParsed }: RangeParserProps) {
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={`Ejemplo:\nBatman #488-496\nDetective Comics #659-662`}
+          placeholder={`Ejemplo:\nBatman #488-496\nDetective Comics #659-662\n\nO tomos sin número (separados por ;):\nBatman Special; Batman: Legends; Batman: Ghosts`}
           rows={4}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
         />
@@ -77,9 +78,8 @@ export function RangeParser({ onParsed }: RangeParserProps) {
           <ul className="space-y-1 text-sm text-blue-800">
             {parsed.map((range, i) => (
               <li key={i}>
-                <strong>{range.seriesName}</strong>: #{range.numbers[0]}
-                {range.numbers.length > 1 ? ` - #${range.numbers[range.numbers.length - 1]}` : ''}
-                {' '}({range.numbers.length} números)
+                {range.names ? range.names.join(', ') : <><strong>{range.seriesName}</strong>: #{range.numbers[0]}{range.numbers.length > 1 ? ` - #${range.numbers[range.numbers.length - 1]}` : ''}</>}
+                {' '}({range.numbers.length} {range.names ? 'tomos' : 'números'})
               </li>
             ))}
           </ul>
