@@ -76,7 +76,7 @@ async function comicVineFetch<T>(endpoint: string, params: Record<string, string
     throw new Error(`Comic Vine API: ${data.error}`)
   }
 
-  return data
+  return data.results as T
 }
 
 export async function searchComicVineSeries(query: string): Promise<ExternalSearchResult[]> {
