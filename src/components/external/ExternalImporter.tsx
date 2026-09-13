@@ -1,10 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
-import { Search, Download, ExternalLink } from 'lucide-react'
+import { Search, ExternalLink } from 'lucide-react'
 
 interface ExternalResult {
   type: 'series' | 'issue' | 'publisher'
@@ -20,7 +19,7 @@ interface ExternalResult {
 
 interface ExternalImporterProps {
   userId: string
-  onImported: () => void
+  onImported?: () => void
 }
 
 export function ExternalImporter({ userId, onImported }: ExternalImporterProps) {
@@ -28,8 +27,6 @@ export function ExternalImporter({ userId, onImported }: ExternalImporterProps) 
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<ExternalResult[]>([])
   const [loading, setLoading] = useState(false)
-  const [importingId, setImportingId] = useState<string | null>(null)
-  const [imported, setImported] = useState<Set<string>>(new Set())
 
   const handleSearch = async () => {
     if (query.trim().length < 2) return
@@ -46,102 +43,6 @@ export function ExternalImporter({ userId, onImported }: ExternalImporterProps) 
     }
   }
 
-  const handleImportSeries = async (result: ExternalResult) => {
-    if (result.type !== 'series') return
-
-    setImportingId(result.id)
-    const supabase = createClient()
-
-    try {
-      const { data: existingSeries } = await supabase
-        .from('series')
-        .select('id')
-        .ilike('name', result.name)
-        .single()
-
-      let seriesId = existingSeries?.id
-
-      if (!seriesId) {
-        const { data: newSeries } = await supabase
-          .from('series')
-          .insert({
-            name: result.name,
-            year_began: result.year ? parseInt(result.year) : null,
-            external_cv_id: result.id.replace('cv_', ''),
-            cover_image_url: result.cover_url,
-          })
-          .select('id')
-          .single()
-
-        seriesId = newSeries?.id
-      }
-
-      if (seriesId) {
-        setImported((prev) => new Set(prev).add(result.id))
-        onImported()
-      }
-    } catch (err) {
-      console.error('Import error:', err)
-    } finally {
-      setImportingId(null)
-    }
-  }
-
-  const handleImportIssue = async (result: ExternalResult) => {
-    if (result.type !== 'issue') return
-
-    setImportingId(result.id)
-    const supabase = createClient()
-
-    try {
-      const seriesName = result.description || 'Serie desconocida'
-
-      const { data: existingSeries } = await supabase
-        .from('series')
-        .select('id')
-        .ilike('name', seriesName)
-        .single()
-
-      let seriesId = existingSeries?.id
-
-      if (!seriesId) {
-        const { data: newSeries } = await supabase
-          .from('series')
-          .insert({ name: seriesName })
-          .select('id')
-          .single()
-        seriesId = newSeries?.id
-      }
-
-      if (seriesId) {
-        const numberMatch = result.name.match(/#(\d+)/)
-        const number = numberMatch ? numberMatch[1] : result.name
-
-        const { data: existingIssue } = await supabase
-          .from('issues')
-          .select('id')
-          .eq('series_id', seriesId)
-          .eq('number', number)
-          .single()
-
-        if (!existingIssue) {
-          await supabase.from('issues').insert({
-            series_id: seriesId,
-            number,
-            title: result.name.replace(/#\d+\s*-?\s*/, ''),
-          })
-        }
-
-        setImported((prev) => new Set(prev).add(result.id))
-        onImported()
-      }
-    } catch (err) {
-      console.error('Import error:', err)
-    } finally {
-      setImportingId(null)
-    }
-  }
-
   return (
     <>
       <Button variant="secondary" onClick={() => setIsOpen(true)}>
@@ -149,7 +50,7 @@ export function ExternalImporter({ userId, onImported }: ExternalImporterProps) 
         Buscar en Comic Vine
       </Button>
 
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Importar desde Comic Vine">
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Buscar en Comic Vine">
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -201,27 +102,11 @@ export function ExternalImporter({ userId, onImported }: ExternalImporterProps) 
                         href={result.external_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gray-400 hover:text-gray-600"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
                       >
-                        <ExternalLink size={16} />
+                        <ExternalLink size={14} />
+                        Consultar
                       </a>
-                    )}
-                    {imported.has(result.id) ? (
-                      <span className="text-green-600 text-sm font-medium">Importado</span>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() =>
-                          result.type === 'series'
-                            ? handleImportSeries(result)
-                            : handleImportIssue(result)
-                        }
-                        loading={importingId === result.id}
-                      >
-                        <Download size={14} className="mr-1" />
-                        Importar
-                      </Button>
                     )}
                   </div>
                 </div>
