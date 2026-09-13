@@ -7,7 +7,6 @@ import { getEdition, deleteEdition, updateEdition } from '@/lib/api/editions'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { IssueSelector } from '@/components/editions/IssueSelector'
-import { MissingIssues } from '@/components/editions/MissingIssues'
 import { CoverUpload } from '@/components/ui/CoverUpload'
 import Link from 'next/link'
 import { ArrowLeft, Edit, Trash2, BookOpen, Calendar, MapPin, Star, ExternalLink } from 'lucide-react'
@@ -276,33 +275,6 @@ export default function EditionDetailPage() {
             </p>
           )}
         </div>
-
-        {edition.edition_issues && edition.edition_issues.length > 0 && (() => {
-          const seriesGroups = new Map<string, { name: string; issues: Array<{ id: string; number: string; title: string | null }> }>()
-          for (const item of edition.edition_issues) {
-            const seriesId = item.issues.series_id || item.issues.series?.name
-            const existing = seriesGroups.get(seriesId)
-            if (existing) {
-              existing.issues.push(item.issues)
-            } else {
-              seriesGroups.set(seriesId, {
-                name: item.issues.series?.name || 'Sin serie',
-                issues: [item.issues],
-              })
-            }
-          }
-
-          return Array.from(seriesGroups.entries()).map(([seriesId, group]) => (
-            <MissingIssues
-              key={seriesId}
-              seriesId={seriesId}
-              seriesName={group.name}
-              ownedIssueNumbers={group.issues.map(i => i.number)}
-              editionId={edition.id}
-              allIssues={group.issues}
-            />
-          ))
-        })()}
       </div>
 
       <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Eliminar edición">
