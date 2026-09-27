@@ -94,20 +94,20 @@ export async function findOrCreateIssues(seriesId: string, numbers: string[]) {
     if (existing) {
       issueIds.push(existing.id)
     } else {
-      // Check if this number already exists in ANOTHER series
+      // Check if this number exists in ANOTHER series AND is already linked to an edition
       const { data: duplicate } = await supabase
         .from('issues')
-        .select('id, series:series_id(name)')
+        .select('id, series:series_id(name), edition_issues(id)')
         .neq('series_id', seriesId)
         .eq('number', number)
         .limit(1)
         .single()
 
-      if (duplicate) {
+      if (duplicate && duplicate.edition_issues && duplicate.edition_issues.length > 0) {
         const seriesRel = duplicate.series as unknown as { name: string } | null
         const otherSeriesName = seriesRel?.name || 'otra serie'
         const confirmed = window.confirm(
-          `El número #${number} ya existe en "${otherSeriesName}".\n\n` +
+          `El número #${number} ya existe en "${otherSeriesName}" y está vinculado a una edición.\n\n` +
           `¿Seguro que querés crearlo también en esta serie?`
         )
         if (!confirmed) {
