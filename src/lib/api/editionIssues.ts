@@ -95,6 +95,27 @@ export async function findOrCreateIssues(seriesId: string, numbers: string[], na
     if (existing) {
       issueIds.push(existing.id)
     } else {
+      // Check if this number already exists in ANOTHER series
+      const { data: duplicate } = await supabase
+        .from('issues')
+        .select('id, series:series_id(name)')
+        .neq('series_id', seriesId)
+        .eq('number', number)
+        .limit(1)
+        .single()
+
+      if (duplicate) {
+        const seriesRel = duplicate.series as unknown as { name: string } | null
+        const otherSeriesName = seriesRel?.name || 'otra serie'
+        const confirmed = window.confirm(
+          `El número #${number} ya existe en "${otherSeriesName}".\n\n` +
+          `¿Seguro que querés crearlo también en esta serie?`
+        )
+        if (!confirmed) {
+          continue // skip this number
+        }
+      }
+
       // Create new issue
       const { data: newIssue, error } = await supabase
         .from('issues')
