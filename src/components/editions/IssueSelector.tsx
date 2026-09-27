@@ -17,7 +17,6 @@ interface IssueSelectorProps {
 interface ParsedRange {
   seriesName: string
   numbers: string[]
-  names?: string[]
 }
 
 interface Series {
@@ -78,7 +77,7 @@ export function IssueSelector({ editionId, onIssuesAdded }: IssueSelectorProps) 
 
         if (seriesId) {
           // Find or create issues
-          const issueIds = await findOrCreateIssues(seriesId, range.numbers, range.names)
+          const issueIds = await findOrCreateIssues(seriesId, range.numbers)
           
           // Add to edition
           await addMultipleIssuesToEdition(editionId, issueIds)

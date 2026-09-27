@@ -1,7 +1,6 @@
 interface ParsedRange {
   seriesName: string
   numbers: string[]
-  names?: string[]
 }
 
 export function parseIssueRanges(text: string): ParsedRange[] {
@@ -13,10 +12,10 @@ export function parseIssueRanges(text: string): ParsedRange[] {
     const semicolonParts = line.split(';').map(p => p.trim()).filter(Boolean)
     
     if (semicolonParts.length > 1) {
-      const names = semicolonParts
-      const numbers = names.map((_, i) => (i + 1).toString())
-      
-      results.push({ seriesName: 'Sin serie', numbers, names })
+      // Each semicolon-separated name becomes its own series with issue #1
+      for (const name of semicolonParts) {
+        results.push({ seriesName: name, numbers: ['1'] })
+      }
     } else {
       const numbersStart = line.search(/#?\d/)
       
@@ -67,9 +66,6 @@ function parseNumbers(text: string): string[] {
 export function formatParsedRanges(ranges: ParsedRange[]): string {
   return ranges
     .map(r => {
-      if (r.names && r.names.length > 0) {
-        return r.names.join(', ')
-      }
       if (r.numbers.length === 1 && r.numbers[0] === '1') {
         return r.seriesName
       }

@@ -9,7 +9,6 @@ import { Search, Plus, X } from 'lucide-react'
 interface ParsedRange {
   seriesName: string
   numbers: string[]
-  names?: string[]
 }
 
 interface RangeParserProps {
@@ -78,8 +77,8 @@ export function RangeParser({ onParsed }: RangeParserProps) {
           <ul className="space-y-1 text-sm text-blue-800">
             {parsed.map((range, i) => (
               <li key={i}>
-                {range.names ? range.names.join(', ') : <><strong>{range.seriesName}</strong>: #{range.numbers[0]}{range.numbers.length > 1 ? ` - #${range.numbers[range.numbers.length - 1]}` : ''}</>}
-                {' '}({range.numbers.length} {range.names ? 'tomos' : 'números'})
+                <strong>{range.seriesName}</strong>: {range.numbers.length === 1 && range.numbers[0] === '1' ? 'tomo único' : `#${range.numbers[0]}${range.numbers.length > 1 ? ` - #${range.numbers[range.numbers.length - 1]}` : ''}`}
+                {' '}({range.numbers.length} {range.numbers.length === 1 && range.numbers[0] === '1' ? 'serie' : 'números'})
               </li>
             ))}
           </ul>
