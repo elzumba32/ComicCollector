@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useUser } from '@/hooks/useUser'
 import { getEdition, deleteEdition, updateEdition } from '@/lib/api/editions'
+import { removeIssueFromEdition } from '@/lib/api/editionIssues'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { IssueSelector } from '@/components/editions/IssueSelector'
@@ -48,6 +49,7 @@ export default function EditionDetailPage() {
   const [loading, setLoading] = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [removingIssueId, setRemovingIssueId] = useState<string | null>(null)
   const { user, loading: userLoading } = useUser()
   const router = useRouter()
   const params = useParams()
@@ -103,6 +105,24 @@ export default function EditionDetailPage() {
       setEdition((prev) => prev ? { ...prev, cover_image_url: null } : null)
     } catch (err) {
       console.error('Error removing cover:', err)
+    }
+  }
+
+  const handleRemoveIssue = async (issueId: string) => {
+    setRemovingIssueId(issueId)
+    try {
+      await removeIssueFromEdition(id, issueId)
+      setEdition((prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          edition_issues: prev.edition_issues?.filter((item) => item.issues.id !== issueId) || [],
+        }
+      })
+    } catch (err) {
+      console.error('Error removing issue:', err)
+    } finally {
+      setRemovingIssueId(null)
     }
   }
 
@@ -260,12 +280,22 @@ export default function EditionDetailPage() {
           {edition.edition_issues && edition.edition_issues.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {edition.edition_issues.map((item, index) => (
-                <div key={index} className="bg-gray-50 rounded-lg p-3">
-                  <p className="font-medium text-sm">{item.issues.series.name}</p>
-                  <p className="text-gray-600 text-sm">#{item.issues.number}</p>
-                  {item.issues.title && (
-                    <p className="text-gray-500 text-xs mt-1 line-clamp-1">{item.issues.title}</p>
-                  )}
+                <div key={index} className="bg-gray-50 rounded-lg p-3 flex items-start justify-between">
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">{item.issues.series.name}</p>
+                    <p className="text-gray-600 text-sm">#{item.issues.number}</p>
+                    {item.issues.title && (
+                      <p className="text-gray-500 text-xs mt-1 line-clamp-2">{item.issues.title}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleRemoveIssue(item.issues.id)}
+                    disabled={removingIssueId === item.issues.id}
+                    className="text-red-400 hover:text-red-600 disabled:opacity-50 ml-2 shrink-0"
+                    title="Quitar de esta edición"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               ))}
             </div>
